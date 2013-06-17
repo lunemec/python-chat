@@ -21,22 +21,20 @@ look for lukas.pub file.
 
 For server:
 -----------
-    Goto line 78 in server.py, and edit passphrase to that of your key.
-    Goto line 35 in server.py, and change IP address where you want your server to run.
-    Goto line 27 in server.py, and change the port on what the server should run.
+    run python server.py listen_ip listen_port certificate_file certificate_password
 
 For clients:
 ------------
-    Goto line 36 in client.py, and change the passhprase to that of your key.
+    run python client.py username server_ip server_port client_certificate certificate_password
 
 Client keypair needs to have name client.pem in client folder and client's name.pub in server folder.
 
 
-Run python server.py on the server machine.
-Clients run python client.py clientname serverIP serverPort
-
 Note:
 -----
+I found a simple chatserver recipe on the internet with some bugs. I fixed most of them,
+added a encryption and message signing. If there are some bugs, you can report them to me,
+but no promisses :)
 
 This is just software example. It works for simple communication, but it is not user friendly.
 If anyone would like to use it, you do it on your own risk.
