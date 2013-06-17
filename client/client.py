@@ -1,52 +1,52 @@
 # -*- encoding: utf-8 -*-
 
-#! /usr/bin/env python
-
-"""
-Simple chat client for the chat server. Defines
-a simple protocol to be used with chatserver.
-
-"""
-
 import socket
 import sys
 import select
 
 from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_PSS
+from Crypto.Hash import SHA
 
 from communication import send, receive
 
 
 class ChatClient(object):
-    """ A simple command line chat client using select """
 
-    def __init__(self, name, host='127.0.0.1', port=3490):
+    def __init__(self, name, host='127.0.0.1', port=3490, client_key='client.pem', client_key_passphrase=''):
+
         self.name = name
         # Quit flag
         self.flag = False
         self.port = int(port)
         self.host = host
+
         # Initial prompt
         self.prompt = '[' + '@'.join((name, socket.gethostname().split('.')[0])) + ']> '
 
         server_pubkey = open('server.pub', 'r').read()
-        client_privkey = open('client.pem', 'r').read()
+        client_privkey = open(client_key, 'r').read()
 
         self.encryptor = RSA.importKey(server_pubkey)
-        self.decryptor = RSA.importKey(client_privkey, passphrase='heslo')
+        self.decryptor = RSA.importKey(client_privkey, passphrase=client_key_passphrase)
 
         # Connect to server at port
         try:
+
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((host, self.port))
             print 'Connected to chat server@%d' % self.port
+
             # Send my name...
             send(self.sock, 'NAME: ' + self.name)
             data = receive(self.sock)
+
             # Contains client address, set it
             addr = data.split('CLIENT: ')[1]
             self.prompt = '[' + '@'.join((self.name, addr)) + ']> '
+
         except socket.error:
+
             print 'Could not connect to chat server @%d' % self.port
             sys.exit(1)
 
@@ -61,10 +61,29 @@ class ChatClient(object):
                 inputready, outputready, exceptrdy = select.select([0, self.sock], [], [])
 
                 for i in inputready:
+
                     if i == 0:
+                        # grab message
                         data = sys.stdin.readline().strip()
 
-                        data = self.encryptor.encrypt(data, 0)
+                        try:
+                            # encrypt
+                            data = self.encryptor.encrypt(data, 0)
+                            data = data[0]
+
+                            # append signature
+                            signkey = self.decryptor
+                            message_hash = SHA.new()
+                            message_hash.update(data)
+
+                            signer = PKCS1_PSS.new(signkey)
+                            signature = signer.sign(message_hash)
+                            data = '%s#^[[%s' % (data, signature)
+
+                        except ValueError:
+
+                            print 'Too large text, cannot encrypt, not sending.'
+                            data = None
 
                         if data:
 
@@ -74,11 +93,13 @@ class ChatClient(object):
                         data = receive(self.sock)
 
                         if not data:
+                            i
                             print 'Shutting down.'
                             self.flag = True
                             break
 
                         else:
+
                             if 'PLAIN:' in data:
 
                                 data = data.strip('PLAIN:').strip()
@@ -91,6 +112,7 @@ class ChatClient(object):
                             sys.stdout.flush()
 
             except KeyboardInterrupt:
+
                 print 'Interrupted.'
                 self.sock.close()
                 break
@@ -98,8 +120,8 @@ class ChatClient(object):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) < 3:
-        sys.exit('Usage: %s chatid host portno' % sys.argv[0])
+    if len(sys.argv) < 5:
+        sys.exit('Usage: %s username host portno private_key private_key_password' % sys.argv[0])
 
-    client = ChatClient(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    client = ChatClient(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4], sys.argv[5])
     client.cmdloop()
