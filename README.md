@@ -21,13 +21,13 @@ look for lukas.pub file.
 
 For server:
 -----------
-Goto line 78 in server.py, and edit passphrase to that of your key.
-Goto line 35 in server.py, and change IP address where you want your server to run.
-Goto line 27 in server.py, and change the port on what the server should run.
+    Goto line 78 in server.py, and edit passphrase to that of your key.
+    Goto line 35 in server.py, and change IP address where you want your server to run.
+    Goto line 27 in server.py, and change the port on what the server should run.
 
 For clients:
 ------------
-Goto line 36 in client.py, and change the passhprase to that of your key.
+    Goto line 36 in client.py, and change the passhprase to that of your key.
 
 Client keypair needs to have name client.pem in client folder and client's name.pub in server folder.
 
