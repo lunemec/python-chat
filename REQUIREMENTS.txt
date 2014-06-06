@@ -1,1 +1,5 @@
 pycrypto
+
+# if you are not able to install pycrypto, 
+# make sure you have python development headers installed
+# sudo apt-get install python-dev
